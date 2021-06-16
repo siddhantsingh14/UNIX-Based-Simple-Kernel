@@ -1,0 +1,116 @@
+Checkpoint 1:
+
+Bug 1: Stuck in bootloop
+    Sol: Mistake is loading gdt in boot.S (incorrect use of lgdt)
+
+Bug 2: no interrupts being generated
+    Sol: Flipping the order of outb() calls fixed this error
+
+Bug 3: Wrong initialisation of the PIC
+    Sol: The bits were not unmasked after initialisation
+
+Bug 4: Only 1 interrupt being generated
+    Sol: Problem with send_eoi
+
+Bug 5: Paging not working
+    Sol: when we run info mem, it is forcing our rtc not to work. we think there is problem with virtual memory mapping
+
+Checkpoint 2:
+
+Bug 1: Capslock+numbers gives !@# instead of 123...
+    Sol: We defined a new array with the numbers/symbols that appear when you don't hold shift & with capital letters, then another but with lower case letters 
+
+Bug 2: Scroll function last line printed with characters from previous line
+    Sol: for loop for clearing the row should have been i<Numrows*Numcols and I had it using r (parameter taken in by func) so it wasn't clearing properly for new line
+
+Bug 3: Backspace when line 1 is filled and line 2 has one char
+    Sol: I had to click backspace three times when moving from a row to the previous row and this was fixed by setting screen_x = num_cols - 1 instead of just num_cols in my if condition
+
+Bug 4: Capslock and shift weren't working
+    Sol: our key_status helper function was being called with wrong parameter so data wasn't being taken in properly
+
+Bug 5: Garbage values being printed to terminal from read/write
+    Sol: memset on keyboard buffer to clear/initialize it properly
+
+Bug 6: When pressing enter, it skipped a line
+    Sol: an extra putc() statement while determing whether the key pressed is enter
+
+Bug 7: cntl+l not working properly
+    Sol: we were clearing the buffer when cntl + l was registered, we are now
+
+Bug 8: file_read results in weird symbols printing to screen
+    Sol: TBD - think it has to do with offset math in read_data
+
+Bug 9: directory_read does not print anything to screen
+    Sol: TBD - bug must be in read_dentry functions 
+
+Checkpoint 3:
+
+Bug 10: PCB members were not being recognized
+    Sol: Had to declare file_descriptor struct before PCB in order to reference certain members
+
+Bug 11: Jumptable for various operations was not working
+    Sol: Switched to array implementation for jumptable
+
+Bug 12: Accessing the operations in the jumptable was not working   
+    Sol: Used inline assembly to call functions
+
+Bug 13: read_data had a page fault
+    Sol: Was setting starting address incorrectly (adding bits instead of bytes)
+
+Checkpoint 4:
+
+Bug 11: Jumptable for open, read, write, close not being recognized 
+    Sol: Added the tabled init function to intialize each jumptable appropriately 
+
+Bug 12: Only first two letters of command being types in were being recognized, therefore, no commands were running 
+    Sol: Mistake in keyboard handler in the way we were populating our keyboard buffer, since the buffer was holding 
+         miscellaneous null characters after being populated fully 
+
+Bug 13: Page fault error for all commands 
+    Sol 1: Got rid of assembly linkage for our open, read, write functions in syscall, implemented them in C instead 
+    Sol 2: Got rid of passing in our process_num argument as pointer for our create paging function, since it was giving 
+         a "dereferencing null pointer" error 
+    Sol 3: Our process number and state were not being updated correctly, implemented a function to intialize state and 
+         set state back to 0 in halt 
+
+Bug 14: ls command not being executed, page faulted and gave output "could not read file"
+    Sol: Some files are now being recognized, changed our open function in syscall to set our flags correctly 
+         when setting our functions pointer to the jump tables 
+
+Bug 15: ls was partially working
+    Sol: stopped using gloabal dentry structs ang got rid of unnecessary checks in file/dir open calls
+
+Bug 16: cat wasn't working
+    Sol 1: open system call was not structured correctly (used switch statement instead)
+    Sol 2: regular file type case within switch statement was not setting inode correctly
+
+Bug 17: grep wasn't working 
+    Sol 1: Needed to reset all the file_descriptor fields in the close system call
+    Sol 2: RTC interrupts were being disabled in rtc_close 
+
+Checkpoint 5:
+
+Bug 18: cat rtc not working and pingpong very slow
+    Sol: Frequency of the RTC was not set correctly to 2 and we did not call outb to write it and this fixed pingpong as well
+
+Bug 19: cat frame0/1.txt not working
+    Sol: Bug in filesystem and systemcall read
+
+Bug 20: page fault in multi terminals when switching
+    Sol: stepped in gdb and there was an if statement in execute that was causing it so got rid of it, worked 
+
+Bug 21: only one command ran on terminals 2 and 3
+    Sol: solution from bug 20 fixed this and now multiple work
+
+Bug 22: The commands were not registered after switching terminal, but worked after pressing w
+    Sol: The scancode of alt was set to the scancode of w, hence it did not release it and thought everything was unprintable
+
+Bug 23: fish and pingpong stop on terminals when switching
+    No Sol: We were unable to fix this as the issue lies in display_switch and we believe context switch is not working. We ran out of time and were unable to fix this. They pause and never restart
+
+Bug 24: Page fault in syserr
+    Sol: This was fixed by changing the interrupt handler for system call from jge to jg for the upper bound since syserr already checks for this case
+
+Bug 25: New terminals unable to execute
+    Sol: We had to add a terminal_status flag in the terminal struct to check whether the current terminal is being executed
